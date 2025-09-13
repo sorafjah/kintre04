@@ -192,20 +192,16 @@
         // --- Firebase Initialization ---
         function initializeFirebase() {
             try {
-                // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-                // TODO: ここにFirebaseプロジェクトの設定情報を貼り付けてください
-                // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+                // Your web app's Firebase configuration
                 const firebaseConfig = {
-                    apiKey: "YOUR_API_KEY",
-                    authDomain: "YOUR_AUTH_DOMAIN",
-                    projectId: "YOUR_PROJECT_ID",
-                    storageBucket: "YOUR_STORAGE_BUCKET",
-                    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-                    appId: "YOUR_APP_ID"
+                  apiKey: "AIzaSyBrpLuGQ8-Xg31jvaCt4Wjx2HzS8U9YyGs",
+                  authDomain: "kintre04.firebaseapp.com",
+                  projectId: "kintre04",
+                  storageBucket: "kintre04.firebasestorage.app",
+                  messagingSenderId: "542825885013",
+                  appId: "1:542825885013:web:b0fd2c4f616050a93f13dc",
+                  measurementId: "G-FRBZ5KF7C7"
                 };
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-                // TODO: 貼り付けはここまで
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -624,3 +620,8 @@
 
         // --- Start App ---
         setupInitialEventListeners();
+        initializeFirebase();
+
+    </script>
+</body>
+</html>
