@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ストレッチ＆筋トレ記録</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            -webkit-tap-highlight-color: transparent; /* タップ時のハイライトを無効化 */
+        }
+        .main-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #f9fafb;
+            min-height: 100vh;
+        }
+        .date-header-sticky {
+            position: sticky;
+            top: 0;
+            background-color: #f9fafb;
+            z-index: 10;
+        }
+        /* カレンダーの今日の日付 */
+        .calendar-day .today {
+            background-color: #10b981;
+            color: white;
+            border-radius: 50%;
+        }
+        /* カレンダーの日付が選択されている状態 */
+        .calendar-day.selected {
+            border: 2px solid #10b981;
+            border-radius: 50%;
+        }
+        /* 長押し時のアニメーション */
+        .long-press-active {
+            transform: scale(0.95);
+            transition: transform 0.1s;
+        }
+        .item-btn {
+            -webkit-user-select: none; /* Safari/Chrome */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard */
+        }
+    </style>
+</head>
+<body class="bg-teal-50">
+
+    <!-- ログイン画面 -->
+    <div id="login-view" class="flex items-center justify-center p-4" style="min-height: 100vh;">
+        <div class="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg border-2 border-teal-200">
+            <h1 class="text-3xl font-bold text-center text-teal-600 mb-2">ストレッチ＆筋トレ</h1>
+            <p class="text-center text-gray-500 mb-8">ニックネームを入力してはじめよう</p>
+            <input type="text" id="nickname-input" class="w-full border-gray-300 rounded-lg p-3 text-lg mb-6 focus:ring-teal-500 focus:border-teal-500" placeholder="ニックネーム">
+            <button id="login-btn" class="w-full bg-teal-500 text-white px-4 py-3 rounded-lg hover:bg-teal-600 font-bold disabled:bg-gray-400 transition-colors duration-300" disabled>
+                <span id="login-btn-text">初期化中...</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- メインの記録画面コンテナ -->
+    <div id="app-container" class="main-container shadow-lg hidden">
+        <!-- メインの記録画面 -->
+        <div id="daily-view">
+            <header class="date-header-sticky p-4 flex justify-between items-center border-b">
+                <button id="prev-day" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <h1 id="current-date" class="text-xl font-bold cursor-pointer text-gray-800"></h1>
+                <button id="next-day" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </header>
+            
+            <div class="p-2 bg-gray-50 border-b flex justify-between items-center text-sm">
+                 <p class="text-gray-600">こんにちは、<span id="display-nickname" class="font-bold"></span> さん</p>
+                 <button id="logout-btn" class="text-red-500 hover:text-red-700 font-semibold">ログアウト</button>
+            </div>
+
+            <main class="p-4 space-y-6 bg-emerald-50/50 min-h-screen">
+                <!-- ストレッチセクション -->
+                <section id="stretch-section" class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold text-emerald-600 flex items-center">
+                            <span class="mr-2 text-xl">🍀</span>
+                            ストレッチ
+                        </h2>
+                        <button class="add-item-btn p-1 rounded-full hover:bg-gray-200" data-category="stretch">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
+                    <div id="stretch-items" class="grid grid-cols-3 gap-3"></div>
+                </section>
+
+                <!-- 筋トレセクション -->
+                <section id="strength-section" class="bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-lg font-semibold text-orange-500 flex items-center">
+                            <span class="mr-2 text-xl">💪</span>
+                            筋トレ
+                        </h2>
+                        <button class="add-item-btn p-1 rounded-full hover:bg-gray-200" data-category="strength">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                        </button>
+                    </div>
+                    <div id="strength-items" class="grid grid-cols-3 gap-3"></div>
+                </section>
+            </main>
+        </div>
+
+        <!-- カレンダー表示画面 -->
+        <div id="calendar-view" class="hidden">
+            <header class="date-header-sticky p-4 flex justify-between items-center border-b">
+                <button id="prev-month" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <h1 id="calendar-month-year" class="text-xl font-bold text-gray-800 cursor-pointer" title="今日の記録に戻る"></h1>
+                <button id="next-month" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </header>
+            <div id="calendar-grid" class="grid grid-cols-7 gap-1 p-2"></div>
+        </div>
+    </div>
+
+    <!-- 項目追加・編集モーダル -->
+    <div id="edit-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-20 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h3 id="modal-title" class="text-lg font-bold mb-4"></h3>
+            <input type="text" id="modal-input" class="w-full border rounded p-2 mb-4" placeholder="項目名">
+            <div class="flex justify-between items-center">
+                 <button id="modal-delete" class="hidden bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">削除</button>
+                <div class="space-x-2">
+                    <button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">キャンセル</button>
+                    <button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 確認モーダル -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-30 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <p id="confirm-message" class="mb-4"></p>
+            <div class="flex justify-end space-x-2">
+                <button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">キャンセル</button>
+                <button id="confirm-ok" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アラートモーダル -->
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-30 p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+            <p id="alert-message" class="mb-4"></p>
+            <div class="flex justify-end">
+                <button id="alert-ok" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">OK</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Firebaseの初期化 ---
+        const platformConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const hardcodedConfig = {
+            apiKey: "AIzaSyDnyG7SgKXpoIa5RlnjkWb6gIh0yHwtvxg",
+            authDomain: "kintre04.firebaseapp.com",
+            projectId: "kintre04",
+            storageBucket: "kintre04.appspot.com",
+            messagingSenderId: "765248944858",
+            appId: "1:765248944858:web:03cdd0f7fd62aceff1c3e3",
+            measurementId: "G-HHNE5R9V1D"
+        };
+        const firebaseConfig = platformConfig || hardcodedConfig;
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+        
+        let nickname;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginView = document.getElementById('login-view');
+            const appContainer = document.getElementById('app-container');
+            const nicknameInput = document.getElementById('nickname-input');
+            const loginBtn = document.getElementById('login-btn');
+            const loginBtnText = document.getElementById('login-btn-text');
+            const logoutBtn = document.getElementById('logout-btn');
+            const displayNickname = document.getElementById('display-nickname');
+            const currentDateEl = document.getElementById('current-date');
+            const stretchItemsEl = document.getElementById('stretch-items');
+            const strengthItemsEl = document.getElementById('strength-items');
+            const calendarGridEl = document.getElementById('calendar-grid');
+            const calendarMonthYearEl = document.getElementById('calendar-month-year');
+            const editModal = document.getElementById('edit-modal');
+
+            let currentDate = new Date();
+            let calendarDate = new Date();
+            let records = {};
+            let categories = {};
+            let longPressTimer;
+            let isAuthReady = false;
+            
+            const initialCategories = {
+                stretch: ['首', '肩', '背中', '腰', '手首', '足首'],
+                strength: ['スクワット', 'ランジ', '腕立てふせ', '片足おじぎ', '腹筋', '背筋']
+            };
+            
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    if (isAuthReady) return;
+                    isAuthReady = true;
+                    console.log("Firebase Auth is ready. UID:", user.uid);
+                    await checkLoginState();
+                } else {
+                     try {
+                        await signInAnonymously(auth);
+                     } catch (error) {
+                        console.error("Anonymous sign-in failed:", error);
+                        loginBtnText.textContent = 'エラー';
+                        showAlertModal(`Firebaseへの接続に失敗しました: ${error.message}`);
+                    }
+                }
+            });
+
+            async function checkLoginState() {
+                if (!isAuthReady) return;
+                const storedNickname = localStorage.getItem('nickname');
+                if (storedNickname) {
+                    await handleLogin(storedNickname);
+                } else {
+                    loginView.style.display = 'flex';
+                    appContainer.classList.add('hidden');
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = '記録をはじめる';
+                }
+            }
+
+            async function handleLogin(name) {
+                console.log(`Attempting to log in as "${name}"`);
+                if (name.includes('/') || name.includes('.') || name.length === 0) {
+                    showAlertModal('ニックネームが正しくありません。(空、/、. は使用できません)');
+                    return;
+                }
+
+                loginBtn.disabled = true;
+                loginBtnText.textContent = '読み込み中...';
+                nickname = name;
+
+                try {
+                    await loadUserData();
+                    initializeAppLogic();
+                    
+                    localStorage.setItem('nickname', nickname);
+                    displayNickname.textContent = nickname;
+                    
+                    loginView.style.display = 'none';
+                    appContainer.classList.remove('hidden');
+                    console.log("Login successful.");
+                } catch (error) {
+                    console.error("Login process failed:", error);
+                    showAlertModal(`データの読み込み中にエラーが発生しました: ${error.message}`);
+                    localStorage.removeItem('nickname');
+                    nickname = null;
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = '記録をはじめる';
+                }
+            }
+            
+            async function handleLogout() {
+                const confirmed = await showConfirmModal('ログアウトしますか？');
+                if (confirmed) {
+                    localStorage.removeItem('nickname');
+                    location.reload();
+                }
+            }
+            
+            function initializeAppLogic() {
+                updateDateDisplay();
+                renderDailyView();
+                setupEventListeners();
+                console.log("Application logic initialized.");
+            }
+
+            // --- データ操作 (Firestore) ---
+            async function loadUserData() {
+                if (!nickname) throw new Error("Nickname is not defined for loading data.");
+                console.log("Loading user data from Firestore...");
+                
+                try {
+                    const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, nickname);
+                    const docSnap = await getDoc(userDocRef);
+
+                    if (docSnap.exists()) {
+                        console.log("Existing user data found.");
+                        const data = docSnap.data();
+                        categories = data.categories || JSON.parse(JSON.stringify(initialCategories));
+                        records = data.records || {};
+                    } else {
+                        console.log("New user. Creating default data.");
+                        categories = JSON.parse(JSON.stringify(initialCategories));
+                        records = {};
+                        await saveUserData(); 
+                    }
+                    console.log("User data loaded successfully.");
+                } catch (error) {
+                    console.error("Error in loadUserData:", error);
+                    throw error;
+                }
+            }
+            
+            async function saveUserData() {
+                if (!nickname) return;
+                try {
+                    const userDocRef = doc(db, `artifacts/${appId}/public/data/users`, nickname);
+                    await setDoc(userDocRef, { categories, records });
+                    console.log("User data saved successfully.");
+                } catch (error) {
+                    console.error("Error saving user data:", error);
+                    showAlertModal(`データの保存に失敗しました: ${error.message}`);
+                }
+            }
+
+            function formatDate(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+
+            function updateDateDisplay() {
+                const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' };
+                currentDateEl.textContent = currentDate.toLocaleDateString('ja-JP', options);
+            }
+
+            function renderDailyView() {
+                updateDateDisplay();
+                const dateKey = formatDate(currentDate);
+                const dayRecords = records[dateKey] || { stretch: [], strength: [] };
+                renderCategoryItems('stretch', stretchItemsEl, dayRecords.stretch);
+                renderCategoryItems('strength', strengthItemsEl, dayRecords.strength);
+            }
+            
+            function renderCategoryItems(category, container, completedItems) {
+                container.innerHTML = '';
+                if (!categories || !categories[category]) return;
+                categories[category].forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.textContent = item;
+                    btn.dataset.item = item;
+                    btn.dataset.category = category;
+                    const baseClasses = 'item-btn border-2 rounded-lg py-3 text-center transition-all duration-200 w-full text-sm sm:text-base';
+                    let inactiveClasses, activeClasses;
+                    if (category === 'stretch') {
+                        inactiveClasses = 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100';
+                        activeClasses = 'bg-emerald-500 border-emerald-500 text-white';
+                    } else {
+                        inactiveClasses = 'bg-orange-50 border-orange-200 text-orange-800 hover:bg-orange-100';
+                        activeClasses = 'bg-orange-500 border-orange-500 text-white';
+                    }
+                    const isCompleted = completedItems && completedItems.includes(item);
+                    btn.className = `${baseClasses} ${isCompleted ? activeClasses : inactiveClasses}`;
+                    btn.addEventListener('click', () => handleItemClick(btn, category, item, inactiveClasses, activeClasses));
+                    btn.addEventListener('mousedown', (e) => startLongPress(e, category, item));
+                    btn.addEventListener('mouseup', cancelLongPress);
+                    btn.addEventListener('mouseleave', cancelLongPress);
+                    btn.addEventListener('touchstart', (e) => startLongPress(e, category, item), { passive: true });
+                    btn.addEventListener('touchend', cancelLongPress);
+                    container.appendChild(btn);
+                });
+            }
+
+            function renderCalendar() {
+                calendarGridEl.innerHTML = '';
+                calendarMonthYearEl.textContent = `${calendarDate.getFullYear()}年 ${calendarDate.getMonth() + 1}月`;
+                ['日', '月', '火', '水', '木', '金', '土'].forEach(day => {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'text-center font-bold text-sm text-gray-600';
+                    dayEl.textContent = day;
+                    calendarGridEl.appendChild(dayEl);
+                });
+                const year = calendarDate.getFullYear();
+                const month = calendarDate.getMonth();
+                const firstDayOfMonth = new Date(year, month, 1);
+                const lastDayOfMonth = new Date(year, month + 1, 0);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                for (let i = 0; i < firstDayOfMonth.getDay(); i++) {
+                    calendarGridEl.appendChild(document.createElement('div'));
+                }
+                for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                    const date = new Date(year, month, day);
+                    const dateKey = formatDate(date);
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'calendar-day h-12 flex flex-col justify-center items-center cursor-pointer';
+                    const numberEl = document.createElement('span');
+                    numberEl.textContent = day;
+                    numberEl.className = 'w-8 h-8 flex items-center justify-center';
+                    const iconEl = document.createElement('div');
+                    iconEl.className = 'text-xs';
+                    const dayRecords = records[dateKey];
+                    let icon = '';
+                    if (dayRecords) {
+                        const didStretch = dayRecords.stretch && dayRecords.stretch.length > 0;
+                        const didStrength = dayRecords.strength && dayRecords.strength.length > 0;
+                        if(didStretch) icon += '🍀';
+                        if(didStrength) icon += '💪';
+                    }
+                    if (!icon && date < today) icon = '😨';
+                    iconEl.textContent = icon;
+                    dayEl.appendChild(numberEl);
+                    dayEl.appendChild(iconEl);
+                    if (date.toDateString() === today.toDateString()) numberEl.classList.add('today');
+                    if (date.toDateString() === currentDate.toDateString()) dayEl.classList.add('selected');
+                    dayEl.addEventListener('click', () => {
+                        currentDate = date;
+                        switchToDailyView();
+                    });
+                    calendarGridEl.appendChild(dayEl);
+                }
+            }
+
+            function setupEventListeners() {
+                loginBtn.addEventListener('click', () => {
+                    const name = nicknameInput.value.trim();
+                    if (name) handleLogin(name);
+                    else showAlertModal('ニックネームを入力してください。');
+                });
+                logoutBtn.addEventListener('click', handleLogout);
+                document.getElementById('prev-day').addEventListener('click', () => changeDay(-1));
+                document.getElementById('next-day').addEventListener('click', () => changeDay(1));
+                document.getElementById('current-date').addEventListener('click', switchToCalendarView);
+                document.getElementById('prev-month').addEventListener('click', () => changeMonth(-1));
+                document.getElementById('next-month').addEventListener('click', () => changeMonth(1));
+                document.getElementById('calendar-month-year').addEventListener('click', () => {
+                     currentDate = new Date();
+                     switchToDailyView();
+                });
+                document.querySelectorAll('.add-item-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openEditModal('add', btn.dataset.category));
+                });
+                document.getElementById('modal-cancel').addEventListener('click', closeEditModal);
+                document.getElementById('modal-save').addEventListener('click', saveModal);
+            }
+
+            function changeDay(offset) {
+                currentDate.setDate(currentDate.getDate() + offset);
+                renderDailyView();
+            }
+
+            function changeMonth(offset) {
+                calendarDate.setMonth(calendarDate.getMonth() + offset);
+                renderCalendar();
+            }
+
+            async function handleItemClick(btn, category, item, inactiveClasses, activeClasses) {
+                const dateKey = formatDate(currentDate);
+                if (!records[dateKey]) records[dateKey] = { stretch: [], strength: [] };
+                if (!records[dateKey][category]) records[dateKey][category] = [];
+                const completedList = records[dateKey][category];
+                const itemIndex = completedList.indexOf(item);
+                const inactive = inactiveClasses.split(' ');
+                const active = activeClasses.split(' ');
+                if (itemIndex > -1) {
+                    completedList.splice(itemIndex, 1);
+                    btn.classList.remove(...active);
+                    btn.classList.add(...inactive);
+                } else {
+                    completedList.push(item);
+                    btn.classList.remove(...inactive);
+                    btn.classList.add(...active);
+                }
+                await saveUserData();
+            }
+
+            function startLongPress(e, category, item) {
+                const target = e.currentTarget;
+                target.classList.add('long-press-active');
+                longPressTimer = setTimeout(() => {
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    openEditModal('edit', category, item);
+                    target.classList.remove('long-press-active');
+                    longPressTimer = null;
+                }, 500);
+            }
+
+            function cancelLongPress(e) {
+                e.currentTarget.classList.remove('long-press-active');
+                if (longPressTimer) clearTimeout(longPressTimer);
+            }
+
+            function openEditModal(mode, category, currentItem = '') {
+                const titleEl = document.getElementById('modal-title');
+                const inputEl = document.getElementById('modal-input');
+                const deleteBtn = document.getElementById('modal-delete');
+                const saveBtn = document.getElementById('modal-save');
+                inputEl.value = currentItem;
+                saveBtn.dataset.mode = mode;
+                saveBtn.dataset.category = category;
+                saveBtn.dataset.currentItem = currentItem;
+                if (mode === 'add') {
+                    titleEl.textContent = '項目を追加';
+                    deleteBtn.classList.add('hidden');
+                } else {
+                    titleEl.textContent = '項目を編集';
+                    deleteBtn.classList.remove('hidden');
+                    deleteBtn.onclick = () => deleteItem(category, currentItem);
+                }
+                editModal.classList.remove('hidden');
+                inputEl.focus();
+            }
+
+            function closeEditModal() {
+                editModal.classList.add('hidden');
+            }
+
+            async function saveModal() {
+                const saveBtn = document.getElementById('modal-save');
+                const { mode, category, currentItem } = saveBtn.dataset;
+                const newItem = document.getElementById('modal-input').value.trim();
+                if (!newItem) return showAlertModal('項目名を入力してください。');
+                
+                if (mode === 'add') {
+                    if (categories[category].includes(newItem)) return showAlertModal('同じ名前の項目が既に存在します。');
+                    categories[category].push(newItem);
+                } else {
+                    const itemIndex = categories[category].indexOf(currentItem);
+                    if (itemIndex > -1) {
+                        Object.keys(records).forEach(dateKey => {
+                            const catRecords = records[dateKey][category];
+                            if(catRecords) {
+                                const recIndex = catRecords.indexOf(currentItem);
+                                if (recIndex > -1) catRecords[recIndex] = newItem;
+                            }
+                        });
+                        categories[category][itemIndex] = newItem;
+                    }
+                }
+                await saveUserData();
+                renderDailyView();
+                closeEditModal();
+            }
+            
+            async function deleteItem(category, item) {
+                const confirmed = await showConfirmModal(`「${item}」を削除しますか？すべての記録からこの項目が削除されます。`);
+                if (!confirmed) return;
+                const itemIndex = categories[category].indexOf(item);
+                if (itemIndex > -1) categories[category].splice(itemIndex, 1);
+                Object.keys(records).forEach(dateKey => {
+                    const catRecords = records[dateKey][category];
+                    if (catRecords) {
+                         const recIndex = catRecords.indexOf(item);
+                         if (recIndex > -1) catRecords.splice(recIndex, 1);
+                    }
+                });
+                await saveUserData();
+                renderDailyView();
+                closeEditModal();
+            }
+            
+            function showAlertModal(message) {
+                const alertModal = document.getElementById('alert-modal');
+                document.getElementById('alert-message').textContent = message;
+                alertModal.classList.remove('hidden');
+                return new Promise(resolve => {
+                    document.getElementById('alert-ok').onclick = () => {
+                        alertModal.classList.add('hidden');
+                        resolve();
+                    };
+                });
+            }
+
+            function showConfirmModal(message) {
+                const confirmModal = document.getElementById('confirm-modal');
+                document.getElementById('confirm-message').textContent = message;
+                confirmModal.classList.remove('hidden');
+                return new Promise(resolve => {
+                    document.getElementById('confirm-ok').onclick = () => {
+                        confirmModal.classList.add('hidden');
+                        resolve(true);
+                    };
+                    document.getElementById('confirm-cancel').onclick = () => {
+                        confirmModal.classList.add('hidden');
+                        resolve(false);
+                    };
+                });
+            }
+
+            function switchToCalendarView() {
+                const dailyView = document.getElementById('daily-view');
+                const calendarView = document.getElementById('calendar-view');
+                calendarDate = new Date(currentDate);
+                renderCalendar();
+                dailyView.classList.add('hidden');
+                calendarView.classList.remove('hidden');
+            }
+
+            function switchToDailyView() {
+                const dailyView = document.getElementById('daily-view');
+                const calendarView = document.getElementById('calendar-view');
+                renderDailyView();
+                calendarView.classList.add('hidden');
+                dailyView.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+
