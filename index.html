@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>ストレッチ＆筋トレ記録</title>
     
+    <!-- iPhone Icon -->
     <link rel="apple-touch-icon" href="stretch.png">
+    
+    <!-- Web App Mode -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ストレッチ＆筋トレ記録">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -54,7 +61,6 @@
         <div class="w-full max-w-sm">
             <div class="bg-white p-8 rounded-2xl shadow-lg text-center">
                 <h1 class="text-2xl font-bold mb-2 text-gray-800">ぼちぼちやろっか♪</h1>
-                <p class="mb-6 text-gray-500 text-sm">ニックネームを入力して記録をはじめましょう。</p>
                 
                 <div class="space-y-4">
                     <input type="text" id="nickname-input" placeholder="ニックネーム" class="w-full border-gray-300 rounded-lg p-3 text-center focus:ring-emerald-500 focus:border-emerald-500 transition">
@@ -627,3 +633,4 @@
     </script>
 </body>
 </html>
+
